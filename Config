@@ -20,7 +20,6 @@ package.Iem-Scheduler = {
 
     dependencies = {
         1.0 = {
-          Python-aws-lambda-powertools = 1.x;
           BenderLibSIM = 1.3;
         };
     };
