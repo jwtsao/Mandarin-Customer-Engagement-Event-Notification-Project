@@ -1,8 +1,8 @@
-from aws_lambda_powertools import Logger
+import logging
 
-logger = Logger(service="iem_scheduler")
+logging.basicConfig(level=logging.DEBUG)
 
 
 def event_handler(event, context):
-    logger.info("Received request")
+    logging.info("Received request")
     return {"message": "Hello World"}
