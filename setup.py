@@ -23,7 +23,7 @@ setup(
     test_command="brazilpython_pytest",
     # Use custom sphinx command which adds an index.html that's compatible with
     # code.amazon.com links.
-    doc_command="amazon_doc_utils_build_sphinx",
+    # doc_command="amazon_doc_utils_build_sphinx",
     # Enable build-time format checking
     check_format=True,
     # Enable type checking
