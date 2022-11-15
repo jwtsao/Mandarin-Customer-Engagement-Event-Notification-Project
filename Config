@@ -52,8 +52,8 @@ package.Iem-Scheduler = {
 
             # Dependencies for type checking. Controlled in `setup.cfg` and
             # `pyproject.toml`
-            BrazilPython-mypy = any;
-            Python-mypy = 0.9xx;
+            # BrazilPython-mypy = any;
+            # Python-mypy = 0.9xx;
 
             # Dependencies for build-time linting. Controlled in `setup.cfg`
             BrazilPython-Flake8 = any;
