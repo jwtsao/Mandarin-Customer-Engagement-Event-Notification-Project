@@ -1,7 +1,7 @@
 import logging
 
-from notif_parser import parser
-from sim_reader import IemTicket
+from .notif_parser import parser
+from .sim_reader import IemTicket
 
 logging.basicConfig(level=logging.DEBUG)
 

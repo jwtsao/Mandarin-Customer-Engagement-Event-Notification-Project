@@ -4,7 +4,6 @@ import textwrap
 from time import sleep
 from typing import TypeVar
 
-import yaml
 from bender.sim import SIM
 
 API_ENDPOINT = "https://maxis-service-prod-iad.amazon.com"
@@ -12,9 +11,9 @@ SIM_REGION = "us-east-1 "
 FOLDER_ID = "e0794c41-09db-48dd-af10-d2fd97c40e95"
 
 # Execution role ≠credentials
-AWS_ACCESS_KEY_ID = os.getenv["AWS_ACCESS_KEY_ID"]
-AWS_SECRET_ACCESS_KEY = os.getenv["AWS_ACCESS_KEY_ID"]
-AWS_SESSION_TOKEN = os.getenv["AWS_SESSION_TOKEN"]
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SESSION_TOKEN = os.getenv("AWS_SESSION_TOKEN")
 
 IemTicket = TypeVar("IemTicket", bound="IemTicket")
 
