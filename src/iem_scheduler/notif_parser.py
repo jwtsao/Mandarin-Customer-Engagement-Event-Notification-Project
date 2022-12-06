@@ -6,8 +6,8 @@ from .constants import IemTicketFields, SimActions
 
 class SimParser:
     def __init__(self, event: dict):
-        self.sns_event_message_attr = event["Records"][0]["SNS"]["MessageAttributes"]
-        self.sns_event_message = json.loads(event["Records"][0]["SNS"]["Message"])
+        self.sns_event_message_attr = event["Records"][0]["Sns"]["MessageAttributes"]
+        self.sns_event_message = json.loads(event["Records"][0]["Sns"]["Message"])
 
         self.sim_ticket_id = self.sns_event_message["documentId"]["id"]
         self.edit_id = None
@@ -19,7 +19,7 @@ class SimParser:
 
         if (
             "editId" in self.sns_event_message
-            and self.sns_event_message["Actions"] == SimActions.MODIFY
+            and self.sns_event_message["action"] == SimActions.MODIFY
         ):
             self.edit_id = self.sns_event_message["editId"]
             self.sim_action = SimActions.MODIFY
@@ -33,7 +33,7 @@ class SimParser:
             )
             self.updated_fields += list(updated_fields_set)
 
-        elif self.sns_event_message["Actions"] == SimActions.CREATE:
+        elif self.sns_event_message["action"] == SimActions.CREATE:
             self.sim_action = SimActions.CREATE
         else:
             self.is_action_needed = False
