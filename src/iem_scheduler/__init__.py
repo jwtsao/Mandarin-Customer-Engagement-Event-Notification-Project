@@ -1,10 +1,13 @@
 import logging
 
-from bender.sim import SIM
+from notif_parser import parser
+from sim_reader import IemTicket
 
 logging.basicConfig(level=logging.DEBUG)
 
 
 def event_handler(event, context):
     logging.info("Received request")
-    return {"message": "Hello World", "sim": str(SIM)}
+    logging.info(event)
+    parser(event)
+    return {"status": 200}
