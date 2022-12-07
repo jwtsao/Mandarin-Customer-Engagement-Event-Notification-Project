@@ -22,6 +22,7 @@ package.Iem-Scheduler = {
         1.0 = {
           BenderLibSIM = 1.3;
           Boto3 = 1.x;
+          Requests-AWS4Auth = 1.0;
         };
     };
 

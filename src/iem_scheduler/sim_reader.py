@@ -6,18 +6,12 @@ import traceback
 from time import sleep
 from typing import TypeVar
 
+from aws4auth_handler import AWS4AuthHandler
 from bender.sim import SIM, SIMEdit, SIMIssue
 
 API_ENDPOINT = "https://issues-ext.amazon.com"
 SIM_REGION = "us-east-1 "
 FOLDER_ID = "e0794c41-09db-48dd-af10-d2fd97c40e95"
-
-# Execution role ≠credentials
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_SESSION_TOKEN = os.getenv("AWS_SESSION_TOKEN")
-
-print(os.environ)
 
 IemTicket = TypeVar("IemTicket", bound="IemTicket")
 
@@ -46,9 +40,13 @@ class IemTicket:
 
     def _create_sim_client(self) -> SIM:
         return SIM(
-            access_key=AWS_ACCESS_KEY_ID,
-            secret_key=AWS_SECRET_ACCESS_KEY,
-            security_token=AWS_SESSION_TOKEN,
+            auth=AWS4AuthHandler(
+                os.environ["AWS_ACCESS_KEY_ID"],
+                os.environ["AWS_SECRET_ACCESS_KEY"],
+                "sim",
+                "us-east-1",
+                os.environ["AWS_SESSION_TOKEN"],
+            ),
             api_endpoint=API_ENDPOINT,
             region=SIM_REGION,
         )
