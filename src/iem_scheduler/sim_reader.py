@@ -26,7 +26,7 @@ class IemTicket:
     def __init__(self, ticket_id: str, edit_id: str = None):
         self._ticket_id: str = None
         self._is_edit: bool = False
-        self._is_create: bool = self._invert(self.is_edit)
+        self._is_create: bool = self._invert(self._is_edit)
         self._original_support_respurces = None
         self._updated_support_resources = None
         self._original_event_date_from = None
@@ -37,8 +37,8 @@ class IemTicket:
 
         if edit_id:
             self._get_sim_edits(edit_id)
-            self.is_edit = True
-            self.is_create = self._invert(self.is_edit)
+            self._is_edit = True
+            self._is_create: bool = self._invert(self._is_edit)
         else:
             self.ticket = self._get_sim_tt(ticket_id)
 
