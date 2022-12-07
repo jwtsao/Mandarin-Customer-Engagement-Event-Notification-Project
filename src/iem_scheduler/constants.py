@@ -11,10 +11,10 @@ class IemTicketFields:
 
     @classmethod
     def all_related_fields(cls) -> set:
-        list_of_class_attr = list()
+        list_of_class_attr = set()
         for attr in dir(cls):
             if attr[:2] != "__" and not isinstance(
                 getattr(cls, attr), type(cls.all_related_fields)
             ):
-                list_of_class_attr.append(getattr(cls, attr))
+                list_of_class_attr.add(getattr(cls, attr))
         return list_of_class_attr

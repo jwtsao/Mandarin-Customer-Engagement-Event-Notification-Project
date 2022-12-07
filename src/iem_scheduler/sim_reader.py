@@ -24,17 +24,19 @@ class IemTicket:
     """This class represents an IEM Ticket object."""
 
     def __init__(self, ticket_id: str, edit_id: str = None):
-        self.is_edit = False
-        self.is_create = self._invert(self.is_edit)
-        self.original_support_respurces = None
-        self.updated_support_resources = None
-        self.original_event_date_from = None
-        self.updated_event_date_from = None
-        self.original_event_date_to = None
-        self.updated_event_date_to = None
+        self._ticket_id: str = None
+        self._is_edit: bool = False
+        self._is_create: bool = self._invert(self.is_edit)
+        self._original_support_respurces = None
+        self._updated_support_resources = None
+        self._original_event_date_from = None
+        self._updated_event_date_from = None
+        self._original_event_date_to = None
+        self._updated_event_date_to = None
+        self.audit_trail: dict = None
 
         if edit_id:
-            self._get_sim_edit_info(edit_id)
+            self._get_sim_edits(edit_id)
             self.is_edit = True
             self.is_create = self._invert(self.is_edit)
         else:
@@ -55,14 +57,18 @@ class IemTicket:
         ticket = self._create_sim_client().get_issue(ticket_id)
         return ticket
 
-    def _get_sim_edit_info(self, edit_id: str) -> SIMEdit:
+    def _get_sim_edits(self, edit_id: str) -> SIMEdit:
 
         # https://tiny.amazon.com/s97zunky/BenderLibSIM/mainline/mainline#L1581
         edit = self._create_sim_client().get_edit_by_id(edit_id).path_edits
+        self.audit_trail = self._create_sim_client().get_issue_edits(edit_id[: edit_id.find(":")])
         logging.info(traceback.print_exc())
         logging.info(edit)
 
         return edit
+
+    def _get_sim_edit_diff(self, sim_edit: SIMEdit) -> dict:
+        pass
 
     @staticmethod
     def _invert(arg: bool):

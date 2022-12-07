@@ -31,7 +31,7 @@ class SimParser:
             updated_fields_set: set = IemTicketFields.all_related_fields().intersection(
                 all_updated_fields
             )
-            self.updated_fields += list(updated_fields_set)
+            self.updated_fields = list(updated_fields_set)
 
         elif self.sns_event_message["action"] == SimActions.CREATE:
             self.sim_action = SimActions.CREATE
