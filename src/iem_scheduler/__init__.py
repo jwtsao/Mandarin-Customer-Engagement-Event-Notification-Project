@@ -13,10 +13,10 @@ def event_handler(event, context):
 
     # Parsing event data from SIM --> SNS
     event = SimParser(event)
-    logging.debug(event.sim_ticket_id)
-    logging.debug(event.edit_id)
-    logging.debug(event.updated_fields)
-    logging.debug(event.sim_action)
+    print(event.sim_ticket_id)
+    print(event.edit_id)
+    print(event.updated_fields)
+    print(event.sim_action)
 
     # Get ticket data or updated fields from SIM
     ticket = IemTicket(event.sim_ticket_id)
