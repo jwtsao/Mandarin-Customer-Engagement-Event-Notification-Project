@@ -14,7 +14,7 @@ FOLDER_ID = "e0794c41-09db-48dd-af10-d2fd97c40e95"
 
 # Execution role ≠credentials
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_SESSION_TOKEN = os.getenv("AWS_SESSION_TOKEN")
 
 IemTicket = TypeVar("IemTicket", bound="IemTicket")
