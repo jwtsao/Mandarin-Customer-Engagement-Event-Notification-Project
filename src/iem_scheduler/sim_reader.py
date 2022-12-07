@@ -8,7 +8,7 @@ from typing import TypeVar
 
 from bender.sim import SIM, SIMEdit, SIMIssue
 
-API_ENDPOINT = "https://issues-ext.amazon.com"
+API_ENDPOINT = "https://maxis-service-prod-iad.amazon.com"
 SIM_REGION = "us-east-1 "
 FOLDER_ID = "e0794c41-09db-48dd-af10-d2fd97c40e95"
 
