@@ -22,7 +22,43 @@ IemTicket = TypeVar("IemTicket", bound="IemTicket")
 
 
 class IemTicket:
-    """This class represents an IEM Ticket object."""
+    """This class represents an IEM Ticket object.
+    
+    Pass the whole SNS event sent from SIM ti this class while constructing this class.
+    It will identify the event is a SIM ticket "Modify" event or a "Create" event, and parse the data in ticket.
+
+    Attributes:
+        event: A dictionary representing the event structure sent from an SNS message.
+        
+        is_action_needed: A boolean variable identifying whether it is needed to modify/create message-sending schedules.
+        assigned_engineers: A list of engineers currently assigned to the IEM event. For example:
+            [
+                {"login": "liyent", "start time": "12/08/2022 08:00 AM", "end time": "12/08/2022 12:00 AM", "profile": "SCD"},
+                {"login": "tonychwu", "start time": "12/08/2022 08:00 AM", "end time": "12/08/2022 12:00 AM", "profile": "Networking"},
+                ...
+            ]
+        event_date_from: A datetime string which is the start date of the IEM. Though the value contains both "date" and "time", please ignore the "time" part of the string since the web form on SIM only allows us to select a "date".
+            For example: "2022-09-14T16:00:00.000Z"
+        event_date_to: A datetime string which is the end date of the IEM. The format is the same as event_date_from.
+        ticket_id: A string represending IEM ticket ID. Example: "MAND-IEM-542"
+        is_support_respurces_changed: A boolean veriable showing if there's any changes to the assigned engineer list.
+        is_event_date_from_changed: A boolean veriable showing if event_date_from was modified.
+        is_event_date_to_changed: A boolean veriable showing if event_date_to was modified.
+
+        Typical usage example:
+
+        >>> ticket = IemTicket(event)
+        >>> ticket_id = ticket.ticket_id
+        >>> if ticket.is_action_needed:
+        >>>     engineers = ticket.assigned_engineers
+        >>>     if ticket.is_edit:
+        >>>         # query database to obtain the original scheduled messages for all engineers related to this IEM ticket
+        >>>         if ticket.is_support_respurces_changed:
+        >>>             # compare the differences (e.g. is there any engineer been removed/replaced or added)
+        >>>             # write/delete entries in the database
+        >>>     elif ticket.is_create:
+        >>>         # write entries in the database based on the value of ticket.assigned_engineers
+    """
 
     def __init__(self, event: dict):
         self._event = SimParser(event)
