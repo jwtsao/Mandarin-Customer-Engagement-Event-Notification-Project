@@ -114,7 +114,7 @@ class IemTicket:
         self._updated_event_date_to = custom_fields[IemTicketFields.EVENT_DATE_TO.split("/")[-1]]
 
     def _get_sim_edits(self, edit_id: str):
-        self._ticket = self._get_sim_tt(edit_id.split(":")[0])
+        self._ticket = self._create_sim_client().get_issue(edit_id.split(":")[0])
         self._ticket_id = self._get_mand_iem_alias_id_by_simissue(self._ticket)
         # https://tiny.amazon.com/s97zunky/BenderLibSIM/mainline/mainline#L1581
         self._edit = self._create_sim_client().get_edit_by_id(edit_id)
