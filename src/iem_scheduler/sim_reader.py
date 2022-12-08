@@ -23,14 +23,16 @@ IemTicket = TypeVar("IemTicket", bound="IemTicket")
 
 class IemTicket:
     """This class represents an IEM Ticket object.
-    
+
     Pass the whole SNS event sent from SIM ti this class while constructing this class.
     It will identify the event is a SIM ticket "Modify" event or a "Create" event, and parse the data in ticket.
 
     Attributes:
         event: A dictionary representing the event structure sent from an SNS message.
-        
+
         is_action_needed: A boolean variable identifying whether it is needed to modify/create message-sending schedules.
+        is_edit: A boolean veriable to check if it's an ticket "Modify" event
+        is_create: A boolean veriable to check if it's an ticket "Create" event
         assigned_engineers: A list of engineers currently assigned to the IEM event. For example:
             [
                 {"login": "liyent", "start time": "12/08/2022 08:00 AM", "end time": "12/08/2022 12:00 AM", "profile": "SCD"},
@@ -195,3 +197,11 @@ class IemTicket:
     @property
     def is_event_date_to_changed(self):
         return self._is_event_date_to_changed
+
+    @property
+    def is_edit(self):
+        return self._is_edit
+
+    @property
+    def is_create(self):
+        return self._is_create
