@@ -108,13 +108,10 @@ class IemTicket:
         self._ticket = self._create_sim_client().get_issue(ticket_id)
         custom_fields: dict = self._ticket.custom_fields
         self._updated_support_resources = self._parse_nominated_support_resources(
-            custom_fields["full_text"][0]["value"]
+            custom_fields["nominated_support_resources"]
         )
-        for date in custom_fields["date"]:
-            if date["id"] == IemTicketFields.EVENT_DATE_FROM.split("/")[-1]:
-                self._updated_event_date_from = date["value"]
-            elif date["id"] == IemTicketFields.EVENT_DATE_TO.split("/")[-1]:
-                self._updated_event_date_to = date["value"]
+        self._updated_event_date_from = custom_fields[IemTicketFields.EVENT_DATE_FROM.split("/")[-1]]
+        self._updated_event_date_to = custom_fields[IemTicketFields.EVENT_DATE_TO.split("/")[-1]]
 
     def _get_sim_edits(self, edit_id: str):
         self._ticket = self._get_sim_tt(edit_id.split(":")[0])
