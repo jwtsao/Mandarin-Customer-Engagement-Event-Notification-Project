@@ -40,8 +40,6 @@ class IemTicket:
         self._ticket: SIMIssue = None
         self._edit: SIMEdit = None
 
-        self._parse_event(event)
-
         if self._event.is_action_needed:
             if self._event.sim_action == SimActions.MODIFY:
                 self._get_sim_edits(self._event.edit_id)
