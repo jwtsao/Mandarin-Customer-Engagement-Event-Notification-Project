@@ -21,6 +21,8 @@ FOLDER_ID = "e0794c41-09db-48dd-af10-d2fd97c40e95"
 
 
 IemTicket = TypeVar("IemTicket", bound="IemTicket")
+logging.getLogger("SIM").setLevel(logging.DEBUG)
+logging.getLogger("requests").setLevel(logging.WARNING)
 
 
 class IemTicket:
