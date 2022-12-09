@@ -1,10 +1,11 @@
 import logging
+import sys
 
 from .sim_reader import IemTicket
 
 # import your python files below
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
 def event_handler(event, context):
