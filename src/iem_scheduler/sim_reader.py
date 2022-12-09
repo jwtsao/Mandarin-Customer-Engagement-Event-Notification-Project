@@ -86,7 +86,7 @@ class IemTicket:
                 self._is_edit = True
             elif self._event.sim_action == SimActions.CREATE:
                 self._is_create = True
-            self._get_sim_tt(event.sim_ticket_id)
+            self._get_sim_tt(self._event.sim_ticket_id)
         else:
             pass  # do nothing
 
@@ -117,9 +117,10 @@ class IemTicket:
 
         # https://tiny.amazon.com/1byhoxhxa/BenderLibSIM/mainline/mainline#L485
         self._ticket = self._create_sim_client().get_issue(ticket_id)
+        self._ticket_id = self._get_mand_iem_alias_id_by_simissue(self._ticket)
         custom_fields: dict = self._ticket.custom_fields
         self._updated_support_resources = self._parse_nominated_support_resources(
-            custom_fields["nominated_support_resources"]
+            custom_fields[IemTicketFields.NOMINATED_SUPPORT_RESOURCES.split("/")[-1]]
         )
         self._updated_event_date_from = custom_fields[
             IemTicketFields.EVENT_DATE_FROM.split("/")[-1]
