@@ -73,6 +73,7 @@ class IemTicket:
         self._updated_event_date_from: str = None
         self._updated_event_date_to: str = None
 
+        # Not used
         self._is_support_respurces_changed = False
         self._is_event_date_from_changed = False
         self._is_event_date_to_changed = False
@@ -82,11 +83,10 @@ class IemTicket:
 
         if self._event.is_action_needed:
             if self._event.sim_action == SimActions.MODIFY:
-                self._get_sim_edits(self._event.edit_id)
                 self._is_edit = True
             elif self._event.sim_action == SimActions.CREATE:
-                self._get_sim_tt(event.sim_ticket_id)
                 self._is_create = True
+            self._get_sim_tt(event.sim_ticket_id)
         else:
             pass  # do nothing
 
