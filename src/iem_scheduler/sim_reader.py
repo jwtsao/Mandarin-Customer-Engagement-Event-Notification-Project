@@ -159,7 +159,7 @@ class IemTicket:
 
     @staticmethod
     def _get_mand_iem_alias_id_by_simissue(sim_issue: SIMIssue) -> str:
-        return [(aliase.id) for aliase in sim_issue.aliases if re.match(r"MAND-IEM-.*", aliase.id)][
+        return [(aliase.id) for aliase in sim_issue.aliases if re.match(r"MAND-IEM-.*", aliase['id'])][
             0
         ]
 
