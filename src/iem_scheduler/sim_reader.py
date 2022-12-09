@@ -93,13 +93,9 @@ class IemTicket:
     @staticmethod
     def _create_sim_client() -> SIM:
         sim = SIM(
-            auth=AWS4AuthHandler(
-                os.environ["AWS_ACCESS_KEY_ID"],
-                os.environ["AWS_SECRET_ACCESS_KEY"],
-                "sim",
-                "us-east-1",
-                os.environ["AWS_SESSION_TOKEN"],
-            ),
+            access_key=os.environ["AWS_ACCESS_KEY_ID"],
+            secret_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+            security_token=os.environ["AWS_SESSION_TOKEN"],
             api_endpoint=API_ENDPOINT,
             region=SIM_REGION,
         )
