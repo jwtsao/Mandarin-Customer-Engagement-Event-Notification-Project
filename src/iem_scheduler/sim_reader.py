@@ -7,6 +7,7 @@ import traceback
 import types
 from time import sleep
 from typing import List, TypeVar
+from urllib import parse
 
 from aws4auth_handler import AWS4AuthHandler
 from bender.sim import SIM, SIMEdit, SIMEdits, SIMIssue, SIMPathEdit
@@ -105,9 +106,11 @@ class IemTicket:
 
         # There's an additional slash in URL in SIM.get_edit_by_id() which causing 403 errors
         # So we will need to monkey-patch the library
+        # also encode the edit id since for unknown reason the Lib does not URL-encode colons ":"
         def get_edit_by_id(self, edit_id: str):
             ticket_id = edit_id[: edit_id.find(":")]
             specific_edit_id = edit_id[edit_id.find(":") + 1 :]
+            specific_edit_id = parse.quote(specific_edit_id, safe="|")
             return SIMEdit(self.api_call(f"issues/{ticket_id}/edits/{specific_edit_id}"))
 
         sim.get_edit_by_id = types.MethodType(get_edit_by_id, sim)
