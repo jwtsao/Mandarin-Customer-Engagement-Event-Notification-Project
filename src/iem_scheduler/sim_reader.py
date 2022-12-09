@@ -4,6 +4,7 @@ import os
 import re
 import textwrap
 import traceback
+import types
 from time import sleep
 from typing import List, TypeVar
 
@@ -119,6 +120,25 @@ class IemTicket:
         self._ticket = self._create_sim_client().get_issue(edit_id.split(":")[0])
         self._ticket_id = self._get_mand_iem_alias_id_by_simissue(self._ticket)
         # https://tiny.amazon.com/s97zunky/BenderLibSIM/mainline/mainline#L1581
+
+        # There's an additional slash in URL in SIM.get_edit_by_id() which causing 403 errors
+        # So we will need to monkey-patch the library
+        def get_edit_by_id(self, edit_id: str):
+            """Returns a specific SIMEdit, using the EditID.
+
+            :param edit_id: a string representing the full editID, which includes the parent ticketID as well.
+
+            Ex: '93cdfe28-e875-45d5-8143-fd37b2725b38:2022-07-03T16:09:44.116Z|us-east-1|10164796933'
+            """
+
+            # The EditID provided to lambda/etc contains the parent TicketID, API call requires we split it.
+            ticket_id = edit_id[: edit_id.find(":")]
+            specific_edit_id = edit_id[edit_id.find(":") + 1 :]
+            return SIMEdit(self.api_call(f"issues/{ticket_id}/edits/{specific_edit_id}"))
+
+        patched_sim_client: SIM = self._create_sim_client()
+        patched_sim_client.get_edit_by_id = types.MethodType(get_edit_by_id, patched_sim_client)
+
         self._edit = self._create_sim_client().get_edit_by_id(edit_id)
         sim_path_edits: List[SIMPathEdit] = self._edit.path_edits
         for path_edit in sim_path_edits:
