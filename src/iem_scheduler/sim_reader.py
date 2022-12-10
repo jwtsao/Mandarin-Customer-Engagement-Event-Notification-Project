@@ -110,7 +110,9 @@ class IemTicket:
         self._updated_support_resources = self._parse_nominated_support_resources(
             custom_fields["nominated_support_resources"]
         )
-        self._updated_event_date_from = custom_fields[IemTicketFields.EVENT_DATE_FROM.split("/")[-1]]
+        self._updated_event_date_from = custom_fields[
+            IemTicketFields.EVENT_DATE_FROM.split("/")[-1]
+        ]
         self._updated_event_date_to = custom_fields[IemTicketFields.EVENT_DATE_TO.split("/")[-1]]
 
     def _get_sim_edits(self, edit_id: str):
