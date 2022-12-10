@@ -1,15 +1,23 @@
 import logging
+<<<<<<< HEAD
 import json 
 
+=======
+import sys
+>>>>>>> refs/remotes/origin/mainline
 
 from .sim_reader import IemTicket
 
 # import your python files below
 
+<<<<<<< HEAD
 from .dynamodbWriting import dynamodbIEM
 from .eventBridge import eventBridge
 
 logging.basicConfig(level=logging.DEBUG)
+=======
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+>>>>>>> refs/remotes/origin/mainline
 
 
 def event_handler(event, context):

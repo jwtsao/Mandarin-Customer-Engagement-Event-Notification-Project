@@ -4,8 +4,10 @@ import os
 import re
 import textwrap
 import traceback
+import types
 from time import sleep
 from typing import List, TypeVar
+from urllib import parse
 
 from aws4auth_handler import AWS4AuthHandler
 from bender.sim import SIM, SIMEdit, SIMEdits, SIMIssue, SIMPathEdit
@@ -19,6 +21,8 @@ FOLDER_ID = "e0794c41-09db-48dd-af10-d2fd97c40e95"
 
 
 IemTicket = TypeVar("IemTicket", bound="IemTicket")
+logging.getLogger("SIM").setLevel(logging.DEBUG)
+logging.getLogger("requests").setLevel(logging.WARNING)
 
 
 class IemTicket:
@@ -71,6 +75,7 @@ class IemTicket:
         self._updated_event_date_from: str = None
         self._updated_event_date_to: str = None
 
+        # Not used
         self._is_support_respurces_changed = False
         self._is_event_date_from_changed = False
         self._is_event_date_to_changed = False
@@ -80,35 +85,48 @@ class IemTicket:
 
         if self._event.is_action_needed:
             if self._event.sim_action == SimActions.MODIFY:
-                self._get_sim_edits(self._event.edit_id)
                 self._is_edit = True
             elif self._event.sim_action == SimActions.CREATE:
-                self._get_sim_tt(event.sim_ticket_id)
                 self._is_create = True
+            self._get_sim_tt(self._event.sim_ticket_id)
         else:
             pass  # do nothing
 
     @staticmethod
     def _create_sim_client() -> SIM:
-        return SIM(
+        sim = SIM(
             auth=AWS4AuthHandler(
-                os.environ["AWS_ACCESS_KEY_ID"],
-                os.environ["AWS_SECRET_ACCESS_KEY"],
-                "sim",
-                "us-east-1",
-                os.environ["AWS_SESSION_TOKEN"],
+                access_key=os.environ["AWS_ACCESS_KEY_ID"],
+                secret_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+                service_name="sim",
+                region_name=SIM_REGION,
+                security_token=os.environ["AWS_SESSION_TOKEN"],
             ),
             api_endpoint=API_ENDPOINT,
             region=SIM_REGION,
         )
 
+        # There's an additional slash in URL in SIM.get_edit_by_id() which causing 403 errors
+        # So we will need to monkey-patch the library
+        # also encode the edit id since for unknown reason the Lib does not URL-encode colons ":"
+        def get_edit_by_id(self, edit_id: str):
+            ticket_id = edit_id[: edit_id.find(":")]
+            specific_edit_id = edit_id[edit_id.find(":") + 1 :]
+            specific_edit_id = parse.quote(specific_edit_id, safe="|")
+            return SIMEdit(self.api_call(f"issues/{ticket_id}/edits/{specific_edit_id}"))
+
+        sim.get_edit_by_id = types.MethodType(get_edit_by_id, sim)
+
+        return sim
+
     def _get_sim_tt(self, ticket_id: str) -> SIMIssue:
 
         # https://tiny.amazon.com/1byhoxhxa/BenderLibSIM/mainline/mainline#L485
         self._ticket = self._create_sim_client().get_issue(ticket_id)
+        self._ticket_id = self._get_mand_iem_alias_id_by_simissue(self._ticket)
         custom_fields: dict = self._ticket.custom_fields
         self._updated_support_resources = self._parse_nominated_support_resources(
-            custom_fields["nominated_support_resources"]
+            custom_fields[IemTicketFields.NOMINATED_SUPPORT_RESOURCES.split("/")[-1]]
         )
         self._updated_event_date_from = custom_fields[
             IemTicketFields.EVENT_DATE_FROM.split("/")[-1]
@@ -118,6 +136,7 @@ class IemTicket:
     def _get_sim_edits(self, edit_id: str):
         self._ticket = self._create_sim_client().get_issue(edit_id.split(":")[0])
         self._ticket_id = self._get_mand_iem_alias_id_by_simissue(self._ticket)
+
         # https://tiny.amazon.com/s97zunky/BenderLibSIM/mainline/mainline#L1581
         self._edit = self._create_sim_client().get_edit_by_id(edit_id)
         sim_path_edits: List[SIMPathEdit] = self._edit.path_edits
@@ -161,9 +180,9 @@ class IemTicket:
 
     @staticmethod
     def _get_mand_iem_alias_id_by_simissue(sim_issue: SIMIssue) -> str:
-        return [(aliase.id) for aliase in sim_issue.aliases if re.match(r"MAND-IEM-.*", aliase.id)][
-            0
-        ]
+        return [
+            (alias["id"]) for alias in sim_issue.aliases if re.match(r"MAND-IEM-.*", alias["id"])
+        ][0]
 
     @property
     def assigned_engineers(self):
