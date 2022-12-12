@@ -16,7 +16,7 @@ from .constants import IemTicketFields, Profiles, SimActions
 from .notif_parser import SimParser
 
 API_ENDPOINT = "https://issues-ext.amazon.com"
-SIM_REGION = "us-east-1 "
+SIM_REGION = "us-east-1"
 FOLDER_ID = "e0794c41-09db-48dd-af10-d2fd97c40e95"
 
 

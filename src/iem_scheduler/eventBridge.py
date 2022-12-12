@@ -1,17 +1,18 @@
 import json
+
 import boto3
 
 
-class eventBridge:
+class EventBridge:
     def __init__(self):
         pass
 
-    def eventscheduler(name, scheduleExpression, eventdetails):
+    def event_scheduler(self, name, schedule_expression, eventdetails):
         client = boto3.client("scheduler")
         response = client.create_schedule(
             FlexibleTimeWindow={"Mode": "OFF"},
             Name=name,
-            ScheduleExpression=scheduleExpression,
+            ScheduleExpression=schedule_expression,
             Target={
                 "Arn": "arn:aws:lambda:us-east-1:413409169525:function:IemNotification",
                 "RoleArn": "arn:aws:iam::413409169525:role/eventbridge-scheduler-role",
@@ -19,7 +20,7 @@ class eventBridge:
             },
         )
 
-    def timeExpressionEditor(time):
+    def time_expression_editor(self, time):
         # format is 12/08/2022 08:00 AM
         # we want at(2022-08-12T08:00:00)"
 

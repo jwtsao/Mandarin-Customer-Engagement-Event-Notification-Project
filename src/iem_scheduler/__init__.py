@@ -1,23 +1,14 @@
 import logging
-<<<<<<< HEAD
-import json 
-
-=======
 import sys
->>>>>>> refs/remotes/origin/mainline
 
+from .dynamodbWriting import DynamodbIEM
+from .eventBridge import EventBridge
 from .sim_reader import IemTicket
 
 # import your python files below
 
-<<<<<<< HEAD
-from .dynamodbWriting import dynamodbIEM
-from .eventBridge import eventBridge
 
-logging.basicConfig(level=logging.DEBUG)
-=======
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
->>>>>>> refs/remotes/origin/mainline
 
 
 def event_handler(event, context):
@@ -26,23 +17,27 @@ def event_handler(event, context):
     # Get ticket data from SIM
     ticket = IemTicket(event)
     ticket_id = ticket.ticket_id
-    
+
     if ticket.is_action_needed:
         engineers = ticket.assign_engineers
         if ticket.is_create:
-            db = dynamodbIEM()
+            db = DynamodbIEM()
             for entry in engineers:
-                db.write(ticket_id, entry["login"], entry["start time"], entry["end time"], entry["profile"])
+                db.write(
+                    ticket_id,
+                    entry["login"],
+                    entry["start time"],
+                    entry["end time"],
+                    entry["profile"],
+                )
                 event_details = db.read(ticket_id, entry["login"])
-                newEvent = eventBridge()
-                eventName = entry["login"] + "_" + ticket_id
-                eventTime = newEvent.timeExpressionEditor(entry["start time"])
-                newEvent.eventScheduler(eventName, eventTime, event_details)
+                new_event = EventBridge()
+                event_name = entry["login"] + "_" + ticket_id
+                event_time = new_event.timeExpressionEditor(entry["start time"])
+                new_event.eventScheduler(event_name, event_time, event_details)
         else:
-            #ticket editing 
-
-    
-
+            # ticket editing
+            pass  # TODO
 
     print(ticket.assigned_engineers)
     print(ticket.event_date_from)
