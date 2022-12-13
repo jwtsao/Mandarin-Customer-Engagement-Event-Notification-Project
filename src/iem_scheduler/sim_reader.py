@@ -161,18 +161,19 @@ class IemTicket:
         anchor_categories = ["ps team", "tam", "field team"]
         support_resources = list()
         value = value.replace("-", "")
-        content = re.sub(r"<.*?>", "", value).strip().split("\n")
+        content = re.sub(r"<.*?>", "", value).split("\n")
         current_section = ""
         for line in content:
+            line = line.strip()
             if line.lower() in anchor_categories:
-                current_section = line.strip()
-            elif current_section.lower() == "ps team":
-                current_profile = line.split(":")[0]
+                current_section = line.lower()
+            elif current_section == "ps team":
+                current_profile = line.split(":")[0].strip()
                 if current_profile in Profiles.all_profiles():
                     engineer = {
                         "login": line.split(",")[1].strip(),
-                        "start time": line.split(",")[2],
-                        "end time": line.split(",")[3],
+                        "start time": line.split(",")[2].strip(),
+                        "end time": line.split(",")[3].strip(),
                         "profile": current_profile,
                     }
                     support_resources.append(engineer)
