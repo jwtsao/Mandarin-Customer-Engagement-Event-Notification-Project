@@ -1,12 +1,14 @@
 import logging
+import os
 import sys
+
+if "LAMBDA_TASK_ROOT" in os.environ.keys():
+    env_lambda_task_root = os.environ["LAMBDA_TASK_ROOT"]
+    sys.path.insert(0, env_lambda_task_root + "/lib/python3.8/site-packages")
 
 from .dynamodbWriting import DynamodbIEM
 from .eventBridge import EventBridge
 from .sim_reader import IemTicket
-
-# import your python files below
-
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
