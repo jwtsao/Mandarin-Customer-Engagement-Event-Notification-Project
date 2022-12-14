@@ -16,7 +16,7 @@ class EventBridge:
             Target={
                 "Arn": "arn:aws:lambda:us-east-1:413409169525:function:IemNotification",
                 "RoleArn": "arn:aws:iam::413409169525:role/eventbridge-scheduler-role",
-                "Input": eventdetails,
+                "Input": json.dumps(eventdetails)
             },
         )
 
