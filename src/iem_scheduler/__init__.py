@@ -19,7 +19,7 @@ def event_handler(event, context):
     ticket_id = ticket.ticket_id
 
     if ticket.is_action_needed:
-        engineers = ticket.assign_engineers
+        engineers = ticket.assigned_engineers
         # comment out the below if statement for testing
         # if ticket.is_create:
         db = DynamodbIEM()
@@ -30,12 +30,14 @@ def event_handler(event, context):
                 entry["start time"],
                 entry["end time"],
                 entry["profile"],
+                ticket.event_date_from,
+                ticket.event_date_to,
             )
             event_details = db.read(ticket_id, entry["login"])
             new_event = EventBridge()
             event_name = entry["login"] + "_" + ticket_id
-            event_time = new_event.timeExpressionEditor(entry["start time"])
-            new_event.eventScheduler(event_name, event_time, event_details)
+            event_time = new_event.time_expression_editor(entry["start time"])
+            new_event.event_scheduler(event_name, event_time, event_details)
     #     else:
     #         # ticket editing
     #         pass  # TODO
