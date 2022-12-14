@@ -8,7 +8,8 @@ class EventBridge:
         pass
 
     def event_scheduler(self, name, schedule_expression, eventdetails):
-        client = boto3.client("scheduler")
+        print("boto3 version = {}".format(boto3.__version__))
+        client = boto3.client("scheduler", region_name="us-east-1")
         response = client.create_schedule(
             FlexibleTimeWindow={"Mode": "OFF"},
             Name=name,
