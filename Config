@@ -1,5 +1,5 @@
 package.Iem-Scheduler = {
-    interfaces = (1.0);
+    interfaces = (1.1);
 
     deploy = {
         generic = true;
@@ -13,13 +13,13 @@ package.Iem-Scheduler = {
     # See https://w.amazon.com/?BrazilPython3
     build-system = brazilpython;
     build-tools = {
-        1.0 = {
+        1.1 = {
             BrazilPython = 3.0;
         };
     };
 
     dependencies = {
-        1.0 = {
+        1.1 = {
           BenderLibSIM = 1.3;
           Boto3 = 1.x;
           Requests-AWS4Auth = 1.0;
@@ -27,7 +27,7 @@ package.Iem-Scheduler = {
     };
 
     test-dependencies = {
-        1.0 = {
+        1.1 = {
             # Run tests with py.test in BrazilPython.
             BrazilPython-Pytest = 6.x;
 
