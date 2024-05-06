@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 
 import boto3
 
@@ -7,43 +8,60 @@ class EventBridge:
     def __init__(self):
         pass
 
-    def event_scheduler(self, name, schedule_expression, eventdetails):
-        print("boto3 version = {}".format(boto3.__version__))
+    def transform_datetime(self, date_str, time_str):
+        time_str = time_str.replace("a.m.", "AM").replace("p.m.", "PM")
+        combined_str = f"{date_str} {time_str}"
+
+        datetime_obj = datetime.strptime(combined_str, "%Y-%m-%d %I:%M %p")
+
+        # 12 hrs before the assigned start time
+        datetime_obj_12hr_before = datetime_obj - timedelta(hours=12)
+
+        formatted_str = f"at({datetime_obj_12hr_before.strftime('%Y-%m-%dT%H:%M:%S')})"
+
+        return formatted_str
+
+    def post_event_datetime_transform(self, date_str, time_str, day):
+        time_str = time_str.replace("a.m.", "AM").replace("p.m.", "PM")
+        combined_str = f"{date_str} {time_str}"
+
+        datetime_obj = datetime.strptime(combined_str, "%Y-%m-%d %I:%M %p")
+
+        datetime_obj_one_day_after = datetime_obj + timedelta(days=int(day))
+
+        formatted_str = f"at({datetime_obj_one_day_after.strftime('%Y-%m-%dT%H:%M:%S')})"
+
+        return formatted_str
+
+    def create_schedule(self, name, schedule_expression, eventdetails):
         client = boto3.client("scheduler", region_name="us-east-1")
         response = client.create_schedule(
+            # ActionAfterCompletion='DELETE',
             FlexibleTimeWindow={"Mode": "OFF"},
             Name=name,
             ScheduleExpression=schedule_expression,
+            ScheduleExpressionTimezone="Asia/Taipei",
             Target={
-                "Arn": "arn:aws:lambda:us-east-1:413409169525:function:IemNotification",
-                "RoleArn": "arn:aws:iam::413409169525:role/eventbridge-scheduler-role",
+                "Arn": "arn:aws:lambda:us-east-1:433443024306:function:IEMSchedulerDev",
+                "RoleArn": "arn:aws:iam::433443024306:role/SchedulerExecutionRole",
                 "Input": json.dumps(eventdetails),
             },
         )
 
-    def time_expression_editor(self, time):
-        # format is 12/08/2022 08:00 AM
-        # we want at(2022-08-12T08:00:00)"
+        return response
 
-        time_list = time.split(" ")
-        date_list = time_list[0].split("/")
-        hour = time_list[1].split(":")[0]
-        minutes = time_list[1].split(":")[1]
-        if time_list[2] == "PM":
-            hour = int(hour) + 12
-            hour = str(hour)
-
-        time_formatted = (
-            "at("
-            + date_list[2]
-            + "-"
-            + date_list[1]
-            + "-"
-            + date_list[0]
-            + "T"
-            + hour
-            + ":"
-            + minutes
-            + ":00)"
+    def delete_schedule(self, name):
+        client = boto3.client("scheduler", region_name="us-east-1")
+        response = client.delete_schedule(
+            Name=name,
         )
-        return time_formatted
+
+        return response
+
+    def get_schedule(self, name):
+        client = boto3.client("scheduler", region_name="us-east-1")
+        response = client.get_schedule(
+            Name=name,
+        )
+
+        return response

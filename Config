@@ -20,9 +20,15 @@ package.Iem-Scheduler = {
 
     dependencies = {
         1.1 = {
-          BenderLibSIM = 1.3;
-          Boto3 = 1.x;
-          Requests-AWS4Auth = 1.0;
+            Python-aws-lambda-powertools = 2.x;
+            BenderLibSIM = 1.3;
+            Boto3 = 1.x;
+            Python-requests-aws4auth = 1.x;
+            Requests-AWS4Auth = 1.0;
+            Requests = 2.x.x;
+            BenderLibSIM = 1.3;
+            Python-pandas = 2.x;
+            Python-numpy = 1.23.x;
         };
     };
 
@@ -68,5 +74,11 @@ package.Iem-Scheduler = {
         # see setup.py for the actual build logic
         # keep this line for brazil-path to work
         python = { type = python; };
+    };
+
+    resolves-conflict-dependencies = {
+        1.1 = {
+            Openssl = 1.1.x;
+        };
     };
 };

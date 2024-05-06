@@ -1,99 +1,21 @@
-import json
-import logging
 import os
-import re
-import textwrap
-import traceback
-import types
-from time import sleep
-from typing import List, TypeVar
-from urllib import parse
 
 from aws4auth_handler import AWS4AuthHandler
-from bender.sim import SIM, SIMEdit, SIMEdits, SIMIssue, SIMPathEdit
+from bender.sim import SIM
 
-from .constants import IemTicketFields, Profiles, SimActions
-from .notif_parser import SimParser
+from .notif_parser import SimPaser
 
 API_ENDPOINT = "https://issues-ext.amazon.com"
 SIM_REGION = "us-east-1"
 FOLDER_ID = "e0794c41-09db-48dd-af10-d2fd97c40e95"
 
 
-IemTicket = TypeVar("IemTicket", bound="IemTicket")
-logging.getLogger("SIM").setLevel(logging.DEBUG)
-logging.getLogger("requests").setLevel(logging.WARNING)
-
-
-class IemTicket:
-    """This class represents an IEM Ticket object.
-
-    Pass the whole SNS event sent from SIM ti this class while constructing this class.
-    It will identify the event is a SIM ticket "Modify" event or a "Create" event, and parse the data in ticket.
-
-    Attributes:
-        event: A dictionary representing the event structure sent from an SNS message.
-
-        is_action_needed: A boolean variable identifying whether it is needed to modify/create message-sending schedules.
-        is_edit: A boolean veriable to check if it's an ticket "Modify" event
-        is_create: A boolean veriable to check if it's an ticket "Create" event
-        assigned_engineers: A list of engineers currently assigned to the IEM event. For example:
-            [
-                {"login": "liyent", "start time": "12/08/2022 08:00 AM", "end time": "12/08/2022 12:00 AM", "profile": "SCD"},
-                {"login": "tonychwu", "start time": "12/08/2022 08:00 AM", "end time": "12/08/2022 12:00 AM", "profile": "Networking"},
-                ...
-            ]
-        event_date_from: A datetime string which is the start date of the IEM. Though the value contains both "date" and "time", please ignore the "time" part of the string since the web form on SIM only allows us to select a "date".
-            For example: "2022-09-14T16:00:00.000Z"
-        event_date_to: A datetime string which is the end date of the IEM. The format is the same as event_date_from.
-        ticket_id: A string represending IEM ticket ID. Example: "MAND-IEM-542"
-        is_support_respurces_changed: A boolean veriable showing if there's any changes to the assigned engineer list.
-        is_event_date_from_changed: A boolean veriable showing if event_date_from was modified.
-        is_event_date_to_changed: A boolean veriable showing if event_date_to was modified.
-
-        Typical usage example:
-
-        >>> ticket = IemTicket(event)
-        >>> ticket_id = ticket.ticket_id
-        >>> if ticket.is_action_needed:
-        >>>     engineers = ticket.assigned_engineers
-        >>>     if ticket.is_edit:
-        >>>         # query database to obtain the original scheduled messages for all engineers related to this IEM ticket
-        >>>         if ticket.is_support_respurces_changed:
-        >>>             # compare the differences (e.g. is there any engineer been removed/replaced or added)
-        >>>             # write/delete entries in the database
-        >>>     elif ticket.is_create:
-        >>>         # write entries in the database based on the value of ticket.assigned_engineers
-    """
-
+class CountdownTicket:
     def __init__(self, event: dict):
-        self._event = SimParser(event)
-        self._ticket_id: str = None
-        self._is_edit: bool = False
-        self._is_create: bool = False
-        self._updated_support_resources: list = None
-        self._updated_event_date_from: str = None
-        self._updated_event_date_to: str = None
+        self.sim = self.create_sim_client()
+        self.sns_message = event
 
-        # Not used
-        self._is_support_respurces_changed = False
-        self._is_event_date_from_changed = False
-        self._is_event_date_to_changed = False
-
-        self._ticket: SIMIssue = None
-        self._edit: SIMEdit = None
-
-        if self._event.is_action_needed:
-            if self._event.sim_action == SimActions.MODIFY:
-                self._is_edit = True
-            elif self._event.sim_action == SimActions.CREATE:
-                self._is_create = True
-            self._get_sim_tt(self._event.sim_ticket_id)
-        else:
-            pass  # do nothing
-
-    @staticmethod
-    def _create_sim_client() -> SIM:
+    def create_sim_client(self) -> SIM:
         sim = SIM(
             auth=AWS4AuthHandler(
                 access_key=os.environ["AWS_ACCESS_KEY_ID"],
@@ -105,122 +27,84 @@ class IemTicket:
             api_endpoint=API_ENDPOINT,
             region=SIM_REGION,
         )
-
-        # There's an additional slash in URL in SIM.get_edit_by_id() which causing 403 errors
-        # So we will need to monkey-patch the library
-        # also encode the edit id since for unknown reason the Lib does not URL-encode colons ":"
-        def get_edit_by_id(self, edit_id: str):
-            ticket_id = edit_id[: edit_id.find(":")]
-            specific_edit_id = edit_id[edit_id.find(":") + 1 :]
-            specific_edit_id = parse.quote(specific_edit_id, safe="|")
-            return SIMEdit(self.api_call(f"issues/{ticket_id}/edits/{specific_edit_id}"))
-
-        sim.get_edit_by_id = types.MethodType(get_edit_by_id, sim)
-
         return sim
 
-    def _get_sim_tt(self, ticket_id: str) -> SIMIssue:
+    def read_nominated_support_resource(self):
+        support_resource = ""
+        parser = SimPaser(self.sns_message)
 
-        # https://tiny.amazon.com/1byhoxhxa/BenderLibSIM/mainline/mainline#L485
-        self._ticket = self._create_sim_client().get_issue(ticket_id)
-        self._ticket_id = self._get_mand_iem_alias_id_by_simissue(self._ticket)
-        custom_fields: dict = self._ticket.custom_fields
-        self._updated_support_resources = self._parse_nominated_support_resources(
-            custom_fields[IemTicketFields.NOMINATED_SUPPORT_RESOURCES.split("/")[-1]]
-        )
-        self._updated_event_date_from = custom_fields[
-            IemTicketFields.EVENT_DATE_FROM.split("/")[-1]
-        ]
-        self._updated_event_date_to = custom_fields[IemTicketFields.EVENT_DATE_TO.split("/")[-1]]
+        if parser.ticketID is None:
+            print("Info: No valid ticketID found. Message action might be 'Resolved'. Ignoring...")
+            return None
 
-    def _get_sim_edits(self, edit_id: str):
-        self._ticket = self._create_sim_client().get_issue(edit_id.split(":")[0])
-        self._ticket_id = self._get_mand_iem_alias_id_by_simissue(self._ticket)
+        try:
+            issue = self.sim.get_issue(parser.ticketID)
+            full_text = issue.data["customFields"]["full_text"]
+        except KeyError:
+            print("Warning: 'full_text' key not found in customFields. Exiting function.")
+            return None
 
-        # https://tiny.amazon.com/s97zunky/BenderLibSIM/mainline/mainline#L1581
-        self._edit = self._create_sim_client().get_edit_by_id(edit_id)
-        sim_path_edits: List[SIMPathEdit] = self._edit.path_edits
-        for path_edit in sim_path_edits:
-            if path_edit.path in self._event.updated_fields:
-                if path_edit.path == IemTicketFields.NOMINATED_SUPPORT_RESOURCES:
-                    self._is_support_respurces_changed = True
-                    self._updated_support_resources = self._parse_nominated_support_resources(
-                        path_edit.edit_data["value"]
-                    )
-                if path_edit.path == IemTicketFields.EVENT_DATE_FROM:
-                    self._is_event_date_from_changed = True
-                    self._updated_event_date_from = path_edit.edit_data["value"]
-                if path_edit.path == IemTicketFields.EVENT_DATE_TO:
-                    self._is_event_date_to_changed = True
-                    self._updated_event_date_to = path_edit.edit_data["value"]
+        for entry in full_text:
+            if entry.get("id") == "nominated_support_resources":
+                support_resource = entry.get("value")
 
-    def _parse_nominated_support_resources(self, value: str) -> list:
-        """
-        [{"login": engineer_login, "start time": start_time, "end time": end_time, "profile": profile}]
-        """
-        anchor_categories = ["ps team", "tam", "field team"]
-        support_resources = list()
-        value = value.replace("-", "")
-        content = re.sub(r"<.*?>", "", value).split("\n")
-        current_section = ""
-        for line in content:
-            line = line.strip()
-            if line.lower() in anchor_categories:
-                current_section = line.lower()
-            elif current_section == "ps team":
-                current_profile = line.split(":")[0].strip()
-                if current_profile in Profiles.all_profiles():
-                    engineer = {
-                        "login": line.split(",")[1].strip(),
-                        "start time": line.split(",")[2].strip(),
-                        "end time": line.split(",")[3].strip(),
-                        "profile": current_profile,
+        return support_resource
+
+    def read_post_event_data(self, ticketid):
+        issue = self.sim.get_issue(ticketid)
+
+        post_event_data = ""
+        full_text = issue.data["customFields"]["full_text"]
+        for entry in full_text:
+            if entry.get("id") == "post_event_data_collection":
+                post_event_data = entry.get("value")
+
+        return post_event_data
+
+    def parse_post_event_content(self, content):
+        entries = content.split("\n")
+        parsed_entries = []
+
+        for entry in entries:
+            parts = entry.split(": ")
+            # Captured content parsing
+            if len(parts) >= 2:
+                parts = entry.split(": ")
+                site, profile, service, login = parts[0].split(", ")
+                site = site.split("- ")[1]
+                hour, survey = parts[1].split(", ")
+
+                parsed_entries.append(
+                    {
+                        "service": service,
+                        "site": site,
+                        "profile": profile,
+                        "login": login,
+                        "hour": hour,
+                        "survey": survey,
                     }
-                    support_resources.append(engineer)
-        return support_resources
+                )
 
-    @staticmethod
-    def _get_mand_iem_alias_id_by_simissue(sim_issue: SIMIssue) -> str:
-        return [
-            (alias["id"]) for alias in sim_issue.aliases if re.match(r"MAND-IEM-.*", alias["id"])
-        ][0]
+        return parsed_entries
 
-    @property
-    def assigned_engineers(self):
-        return self._updated_support_resources
+    # Here three function could only used by function whose message is from SNS
+    def issueid(self):
+        issue = self.sim.get_issue(SimPaser(self.sns_message).ticketID)
+        return issue.main_id
 
-    @property
-    def event_date_from(self):
-        return self._updated_event_date_from
+    def issuetitle(self):
+        issue = self.sim.get_issue(SimPaser(self.sns_message).ticketID)
+        return issue.title
 
-    @property
-    def event_date_to(self):
-        return self._updated_event_date_to
+    def get_customer_name(self):
+        issue = self.sim.get_issue(SimPaser(self.sns_message).ticketID)
 
-    @property
-    def is_action_needed(self) -> bool:
-        return self._event.is_action_needed
+        customer_name = ""
+        custom_field = issue.data["customFields"]
 
-    @property
-    def ticket_id(self) -> str:
-        return self._ticket_id
+        string_entries = custom_field.get("string", [])
+        for item in string_entries:
+            if item.get("id") == "customer_name":
+                customer_name = item.get("value")
 
-    @property
-    def is_support_respurces_changed(self):
-        return self._is_support_respurces_changed
-
-    @property
-    def is_event_date_from_changed(self):
-        return self._is_event_date_from_changed
-
-    @property
-    def is_event_date_to_changed(self):
-        return self._is_event_date_to_changed
-
-    @property
-    def is_edit(self):
-        return self._is_edit
-
-    @property
-    def is_create(self):
-        return self._is_create
+        return customer_name
