@@ -33,10 +33,16 @@ def lambda_handler(event, context):
             nominated_support_resource
         )  # parsed_entries should be list of dictionary with multiple entries(if the custom field content contains several assignments)
 
+        parsed_entries2 = db.parse_captured_content_v2(nominated_support_resource)
+
         dbquery = db.query(ticket_id)
+        dbquery2 = db.query_v2(ticket_id)
 
         records_to_delete, records_to_insert = db.records_comparision(
             ticket_id, dbquery, parsed_entries
+        )
+        records_to_delete2, records_to_insert2 = db.records_comparision_v2(
+            ticket_id, dbquery2, parsed_entries2
         )
 
         # Write records_to_delete and records_to_insert to DynamoDB
@@ -46,13 +52,19 @@ def lambda_handler(event, context):
         for entry in records_to_insert:
             db.write(ticket_id, entry)
 
+        for entry in records_to_delete2:
+            db.delete_v2(entry["ticketId"], entry)
+
+        for entry in records_to_insert2:
+            db.write_v2(ticket_id, entry)
+
         # Create EventBridge Schedules
         eb = EventBridge()
 
-        for entry in records_to_delete:
+        for entry in records_to_delete2:
             # first try to get the exist event schedule, if there is no schedule then skip delete
             day = ["1", "3", "5"]
-            schedule_name = entry["ticketId"] + "_" + entry["login"]
+            schedule_name = entry["ticketId"] + "_" + entry["login@startDate"].replace("@", "-")
             try:
                 eb.delete_schedule(schedule_name)
             except ClientError as error:
@@ -66,13 +78,15 @@ def lambda_handler(event, context):
                     if error.response["Error"]["Code"] == "ResourceNotFoundException":
                         print(f"Schedule {schedule_name_post} does not exist, skipping...")
 
-        for entry in records_to_insert:
+        for entry in records_to_insert2:
+            print("Creating EventBridge Schedule: ", entry["login@startDate"], " ...")
             payload = entry
             payload["customer"] = customer_name
             schedule_time = eb.transform_datetime(entry["eventDateFrom"], entry["startTime"])
-            schedule_name = entry["ticketId"] + "_" + entry["login"]
-            try:  # try except to create 12 hr later schedule to avoid update schedule occurred error
+            schedule_name = entry["ticketId"] + "_" + entry["login@startDate"].replace("@", "-")
+            try:
                 eb.create_schedule(schedule_name, schedule_time, payload)
+                print("Successfully create EventBridge Schedule: ", schedule_name)
             except ClientError as error:
                 if error.response["Error"]["Code"] == "ConflictException":
                     print(f"Schedule {schedule_name} already exists. Deleting existing schedule.")
@@ -80,27 +94,18 @@ def lambda_handler(event, context):
                     print("Re-creating the schedule.")
                     eb.create_schedule(schedule_name, schedule_time, payload)
 
-        # First find the time change in records_to_insert and records_to_delete
         en = EmailNotification()
-        records_time_changed = en.find_schedule_change(records_to_delete, records_to_insert)
 
         # Send notification to slack webhook by storing webhook URL to secret manager
         sn = Notification()
         new_assignee = sn.new_assignee_webhook_url
         remove_assignee = sn.remove_assignee_webhook_url
-        update_records = sn.update_records_webhook_url
 
-        records_to_update = sn.find_update_records(records_to_delete, records_to_insert)
-        records_to_delete = sn.drop_update_records(records_to_update, records_to_delete)
-        records_to_insert = sn.drop_update_records(records_to_update, records_to_insert)
-
-        print("records to delete: ", records_to_delete)
-        print("records to insert: ", records_to_insert)
-        print("records to update: ", records_to_update)
-        print("records time changed: ", records_time_changed)
+        print("records to delete: ", records_to_delete2)
+        print("records to insert: ", records_to_insert2)
 
         # Send notification to Microsoft Outlook to enable calendar reminder
-        for entry in records_to_delete:
+        for entry in records_to_delete2:
             records_d = entry
             records_d["customer"] = customer_name
             sn.send_notification(records_d, remove_assignee)
@@ -109,7 +114,7 @@ def lambda_handler(event, context):
             else:
                 en.send_calendar_cancellation(records_d, 1)
 
-        for entry in records_to_insert:
+        for entry in records_to_insert2:
             records_i = entry
             records_i["customer"] = customer_name
             sn.send_notification(records_i, new_assignee)
@@ -117,15 +122,6 @@ def lambda_handler(event, context):
                 en.send_calendar_invitation(records_i, 0, 0)
             else:
                 en.send_calendar_invitation(records_i, 0, 1)
-
-        for entry in records_to_update:
-            records_u = entry
-            records_u["customer"] = customer_name
-            sn.send_notification(records_u, update_records)
-
-        for entry in records_time_changed:
-            records_t = entry
-            en.send_calendar_invitation(records_t, 1, 1)
 
     if "ticketId" in event:
         if "post_event" in event:
@@ -140,13 +136,19 @@ def lambda_handler(event, context):
             post_parsed_entries = ticket.parse_post_event_content(post_event_data)
             post_login_list = []
             for entry in post_parsed_entries:
-                post_login_list.append(entry["login"])
+                post_login_list.append(entry["login"])  # Try to drop duplicate login here
 
-            if event["login"] not in post_login_list:  # The Engineer not yet fill the form
+            login = event["login@startDate"][:-11]
+
+            if login not in post_login_list:  # The Engineer not yet fill the form
                 reminder = sn.reminder_url
                 sn.send_notification(event, reminder)
                 schedule_name = (
-                    event["ticketId"] + "_" + event["login"] + "_post_" + str(event["post_event"])
+                    event["ticketId"]
+                    + "_"
+                    + event["login@startDate"].replace("@", "-")
+                    + "_post_"
+                    + str(event["post_event"])
                 )
                 try:
                     eb.delete_schedule(schedule_name)
@@ -156,7 +158,13 @@ def lambda_handler(event, context):
             else:  # The Engineer have already filled out the form
                 day = ["1", "3", "5"]
                 for d in day:
-                    schedule_name = event["ticketId"] + "_" + event["login"] + "_post_" + d
+                    schedule_name = (
+                        event["ticketId"]
+                        + "_"
+                        + event["login@startDate"].replace("@", "-")
+                        + "_post_"
+                        + d
+                    )
                     try:
                         eb.delete_schedule(schedule_name)
                     except ClientError as error:
@@ -175,7 +183,7 @@ def lambda_handler(event, context):
             sn.send_notification(event, schedule_notification)
 
             eb = EventBridge()
-            schedule_name = event["ticketId"] + "_" + event["login"]
+            schedule_name = event["ticketId"] + "_" + event["login@startDate"].replace("@", "-")
             try:
                 eb.delete_schedule(schedule_name)
             except ClientError as error:
@@ -189,7 +197,13 @@ def lambda_handler(event, context):
                 day_after_notif_time = eb.post_event_datetime_transform(
                     event["eventDateTo"], event["endTime"], d
                 )
-                day_after_schedule_name = event["ticketId"] + "_" + event["login"] + "_post_" + d
+                day_after_schedule_name = (
+                    event["ticketId"]
+                    + "_"
+                    + event["login@startDate"].replace("@", "-")
+                    + "_post_"
+                    + d
+                )
                 payload = event
                 payload["post_event"] = d
                 try:

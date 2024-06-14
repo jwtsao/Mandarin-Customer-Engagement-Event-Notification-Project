@@ -35,7 +35,7 @@ class Notification:
         return webhook_url
 
     def send_notification(self, entry, webhook_url):
-        login = entry["login"]
+        login = entry["login@startDate"][:-11]
         email = login + "@amazon.com"
         ticketid = entry["ticketId"]
         service = entry["service"]
@@ -68,23 +68,23 @@ class Notification:
 
         return {"statusCode": 200, "body": json.dumps("Send to Slack succeed!")}
 
-    def find_update_records(self, list1, list2):
-        matching_dicts = []
+    # def find_update_records(self, list1, list2):
+    #     matching_dicts = []
 
-        logins_in_list1 = {d["login"] for d in list1 if "login" in d}
+    #     logins_in_list1 = {d["login"] for d in list1 if "login" in d}
 
-        for dict2 in list2:
-            if "login" in dict2 and dict2["login"] in logins_in_list1:
-                matching_dicts.append(dict2)
+    #     for dict2 in list2:
+    #         if "login" in dict2 and dict2["login"] in logins_in_list1:
+    #             matching_dicts.append(dict2)
 
-        return matching_dicts
+    #     return matching_dicts
 
-    def drop_update_records(self, list_updated, list_to_drop):
-        dropped_list = list_to_drop
-        login_in_list_updated = [d["login"] for d in list_updated if "login" in d]
+    # def drop_update_records(self, list_updated, list_to_drop):
+    #     dropped_list = list_to_drop
+    #     login_in_list_updated = [d["login"] for d in list_updated if "login" in d]
 
-        for dic in list_to_drop:
-            if "login" in dic and dic["login"] in login_in_list_updated:
-                dropped_list.remove(dic)
+    #     for dic in list_to_drop:
+    #         if "login" in dic and dic["login"] in login_in_list_updated:
+    #             dropped_list.remove(dic)
 
-        return dropped_list
+    #     return dropped_list
