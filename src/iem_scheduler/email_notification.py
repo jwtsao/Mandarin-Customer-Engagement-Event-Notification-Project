@@ -11,7 +11,7 @@ class EmailNotification:
         pass
 
     def generate_uid(self, event):
-        deterministic_data = f"{event['ticketId']}-{event['login@startDate']}"
+        deterministic_data = f"{event['ticketId']}-{event['login']}-{event['startTime'][:2]}"
         uid_hash = hashlib.sha256(deterministic_data.encode()).hexdigest()
         return f"Schedule-{uid_hash}"
 
@@ -260,21 +260,3 @@ END:VCALENDAR
         )
 
         return {"statusCode": 200, "body": response}
-
-    # def find_schedule_change(self, old_record, new_record):
-    #     old_record_dict = {item["login"]: item for item in old_record}
-    #     time_change_list = []
-
-    #     for new_item in new_record:
-    #         login = new_item["login"]
-    #         if login in old_record_dict:
-    #             old_item = old_record_dict[login]
-    #             if (
-    #                 new_item["eventDateFrom"] != old_item["eventDateFrom"]
-    #                 or new_item["startTime"] != old_item["startTime"]
-    #                 or new_item["eventDateTo"] != old_item["eventDateTo"]
-    #                 or new_item["endTime"] != old_item["endTime"]
-    #             ):
-    #                 time_change_list.append(new_item)
-
-    #     return time_change_list

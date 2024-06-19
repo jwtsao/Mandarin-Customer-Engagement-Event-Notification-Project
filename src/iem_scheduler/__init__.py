@@ -29,39 +29,27 @@ def lambda_handler(event, context):
         customer_name = ticket.get_customer_name()
 
         db = DynamoDBCountdown()
-        parsed_entries = db.parse_captured_content(
-            nominated_support_resource
-        )  # parsed_entries should be list of dictionary with multiple entries(if the custom field content contains several assignments)
 
-        parsed_entries2 = db.parse_captured_content_v2(nominated_support_resource)
+        # parsed_entries should be list of dictionary with multiple entries(if the custom field content contains several assignments)
+        parsed_entries = db.parse_captured_content(nominated_support_resource)
 
         dbquery = db.query(ticket_id)
-        dbquery2 = db.query_v2(ticket_id)
 
         records_to_delete, records_to_insert = db.records_comparision(
             ticket_id, dbquery, parsed_entries
         )
-        records_to_delete2, records_to_insert2 = db.records_comparision_v2(
-            ticket_id, dbquery2, parsed_entries2
-        )
 
         # Write records_to_delete and records_to_insert to DynamoDB
         for entry in records_to_delete:
-            db.delete(entry["ticketId"], entry["login"])
+            db.delete(entry["ticketId"], entry)
 
         for entry in records_to_insert:
             db.write(ticket_id, entry)
 
-        for entry in records_to_delete2:
-            db.delete_v2(entry["ticketId"], entry)
-
-        for entry in records_to_insert2:
-            db.write_v2(ticket_id, entry)
-
         # Create EventBridge Schedules
         eb = EventBridge()
 
-        for entry in records_to_delete2:
+        for entry in records_to_delete:
             # first try to get the exist event schedule, if there is no schedule then skip delete
             day = ["1", "3", "5"]
             schedule_name = entry["ticketId"] + "_" + entry["login@startDate"].replace("@", "-")
@@ -78,7 +66,7 @@ def lambda_handler(event, context):
                     if error.response["Error"]["Code"] == "ResourceNotFoundException":
                         print(f"Schedule {schedule_name_post} does not exist, skipping...")
 
-        for entry in records_to_insert2:
+        for entry in records_to_insert:
             print("Creating EventBridge Schedule: ", entry["login@startDate"], " ...")
             payload = entry
             payload["customer"] = customer_name
@@ -101,11 +89,11 @@ def lambda_handler(event, context):
         new_assignee = sn.new_assignee_webhook_url
         remove_assignee = sn.remove_assignee_webhook_url
 
-        print("records to delete: ", records_to_delete2)
-        print("records to insert: ", records_to_insert2)
+        print("records to delete: ", records_to_delete)
+        print("records to insert: ", records_to_insert)
 
         # Send notification to Microsoft Outlook to enable calendar reminder
-        for entry in records_to_delete2:
+        for entry in records_to_delete:
             records_d = entry
             records_d["customer"] = customer_name
             sn.send_notification(records_d, remove_assignee)
@@ -114,7 +102,7 @@ def lambda_handler(event, context):
             else:
                 en.send_calendar_cancellation(records_d, 1)
 
-        for entry in records_to_insert2:
+        for entry in records_to_insert:
             records_i = entry
             records_i["customer"] = customer_name
             sn.send_notification(records_i, new_assignee)

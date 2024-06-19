@@ -42,8 +42,8 @@ class EventBridge:
             ScheduleExpression=schedule_expression,
             ScheduleExpressionTimezone="Asia/Taipei",
             Target={
-                "Arn": "arn:aws:lambda:us-east-1:433443024306:function:IEMSchedulerDev",
-                "RoleArn": "arn:aws:iam::433443024306:role/SchedulerExecutionRole",
+                "Arn": "arn:aws:lambda:us-east-1:413409169525:function:IemScheduler",
+                "RoleArn": "arn:aws:iam::413409169525:role/SchedulerExecutionRole",
                 "Input": json.dumps(eventdetails),
             },
         )
