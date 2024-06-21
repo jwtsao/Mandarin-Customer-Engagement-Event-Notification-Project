@@ -50,6 +50,27 @@ class CountdownTicket:
 
         return support_resource
 
+    def read_nominated_support_resource2(self):
+        support_resource = ""
+        parser = SimPaser(self.sns_message)
+
+        if parser.ticketID is None:
+            print("Info: No valid ticketID found. Message action might be 'Resolved'. Ignoring...")
+            return None
+
+        try:
+            issue = self.sim.get_issue(parser.ticketID)
+            full_text = issue.data["customFields"]["full_text"]
+        except KeyError:
+            print("Warning: 'full_text' key not found in customFields. Exiting function.")
+            return None
+
+        for entry in full_text:
+            if entry.get("id") == "nominated_support_resources_2":
+                support_resource = entry.get("value")
+
+        return support_resource
+
     def read_post_event_data(self, ticketid):
         issue = self.sim.get_issue(ticketid)
 

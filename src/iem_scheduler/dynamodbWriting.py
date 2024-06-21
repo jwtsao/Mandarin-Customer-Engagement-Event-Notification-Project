@@ -1,3 +1,5 @@
+import datetime
+
 import boto3
 import pandas as pd
 
@@ -21,12 +23,16 @@ class DynamoDBCountdown:
                 event_date_to = parts[4].split(" - ")[1]
                 end_time = parts[5].replace("", "").strip()
 
+                time_str = start_time.replace(".", "")
+                time_obj = datetime.datetime.strptime(time_str, "%I:%M %p")
+                time_24hr = time_obj.strftime("%H:%M")
+
                 parsed_entries.append(
                     {
                         "service": service,
                         "site": site,
                         "profile": profile,
-                        "login@startDate": login + "@" + event_date_from,
+                        "login@startDate": login + "@" + event_date_from + "_" + time_24hr[:2],
                         "eventDateFrom": event_date_from,
                         "startTime": start_time,
                         "eventDateTo": event_date_to,

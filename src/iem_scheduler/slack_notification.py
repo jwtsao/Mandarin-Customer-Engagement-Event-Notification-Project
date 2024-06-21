@@ -35,7 +35,7 @@ class Notification:
         return webhook_url
 
     def send_notification(self, entry, webhook_url):
-        login = entry["login@startDate"][:-11]
+        login = entry["login@startDate"][:-14]
         email = login + "@amazon.com"
         ticketid = entry["ticketId"]
         service = entry["service"]

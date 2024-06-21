@@ -19,6 +19,7 @@ def lambda_handler(event, context):
         print("SNS event received")
         ticket = CountdownTicket(event)
         nominated_support_resource = ticket.read_nominated_support_resource()
+        nominated_support_resource2 = ticket.read_nominated_support_resource2()
 
         if nominated_support_resource is None:
             logger.info("No nominated support resource found, exiting.")
@@ -31,7 +32,9 @@ def lambda_handler(event, context):
         db = DynamoDBCountdown()
 
         # parsed_entries should be list of dictionary with multiple entries(if the custom field content contains several assignments)
-        parsed_entries = db.parse_captured_content(nominated_support_resource)
+        parsed_entries1 = db.parse_captured_content(nominated_support_resource)
+        parsed_entries2 = db.parse_captured_content2(nominated_support_resource2)
+        parsed_entries = parsed_entries1 + parsed_entries2
 
         dbquery = db.query(ticket_id)
 

@@ -26,7 +26,7 @@ class EmailNotification:
         return dt_trans
 
     def send_calendar_invitation(self, event, option, sequence):
-        login = event["login@startDate"][:-11]
+        login = event["login@startDate"][:-14]
         ticketid = event["ticketId"]
         start_time = self.format_datetime(event["eventDateFrom"], event["startTime"])
         end_time = self.format_datetime(event["eventDateFrom"], event["endTime"])
@@ -35,22 +35,22 @@ class EmailNotification:
         # Here we use eventDateFrom to send Email for the first day schedule to ensure the calendar invitation correct.
         ticketlink = "https://sim.amazon.com/issues/" + ticketid
 
-        sender = "MCE-notification@jwtsao.people.aws.dev"
+        sender = "LS-GM-CE-notification@jwtsao.people.aws.dev"
         recipient = login + "@amazon.com"
-        subject = f"""Reminder: MCE Event {ticketid} Notification"""
+        subject = f"""Reminder: LS-GM-CE Event {ticketid} Notification"""
 
         unique_id = self.generate_uid(event)
 
-        description = "Thank you for contributing to the MCE event and our customer."
+        description = "Thank you for contributing to the LS-GM-CE event and our customer."
 
         html_content_invitation = (
             f"<html>"
             f"<head></head>"
             f"<body>"
-            f"<b>This Email is only for Notification purposes. If you can't participate in this MCE event, please discuss your schedule with your manager.</b>"
+            f"<b>This Email is only for Notification purposes. If you can't participate in this LS-GM-CE event, please discuss your schedule with your manager.</b>"
             f"<br>"
             f"<p>Hi {login}, </p>"
-            f"<p>you have been assigned to MCE event: <strong>{ticketid}</strong>.</p>"
+            f"<p>you have been assigned to LS-GM-CE event: <strong>{ticketid}</strong>.</p>"
             f"<p>Please visit: {ticketlink} and check the nominated support resource on the SIM issue page -> Information Tab. Look at the custom field below to check your assigned information.</p>"
             f"<br><br>"
             f"<p>For additional information, including a user guide, please visit <a href='{'https://w.amazon.com/bin/view/AWSSupportMandarin/OperationalExcellence/CustomerEngagementProcess/Mandarin_Engagement_Event_Dashboard/'}'>Mandarin_Engagement_Event_Dashboard</a> Wiki.</p>"
@@ -63,10 +63,10 @@ class EmailNotification:
             f"<html>"
             f"<head></head>"
             f"<body>"
-            f"<b>This Email is only for Notification purposes. If you can't participate in this MCE event, please discuss your schedule with your manager.</b>"
+            f"<b>This Email is only for Notification purposes. If you can't participate in this LS-GM-CE event, please discuss your schedule with your manager.</b>"
             f"<br>"
             f"<p>Hi {login}, </p>"
-            f"<p>the MCE event you have been assigned to: <strong>{ticketid}</strong> have change the schedule.</p>"
+            f"<p>the LS-GM-CE event you have been assigned to: <strong>{ticketid}</strong> have change the schedule.</p>"
             f"<p>Please visit: {ticketlink} and check the nominated support resource on the SIM issue page -> Information Tab. Look at the custom field below to check your assigned information.</p>"
             f"<br><br>"
             f"<p>For additional information, including a user guide, please visit <a href='{'https://w.amazon.com/bin/view/AWSSupportMandarin/OperationalExcellence/CustomerEngagementProcess/Mandarin_Engagement_Event_Dashboard/'}'>Mandarin_Engagement_Event_Dashboard</a> Wiki.</p>"
@@ -95,7 +95,7 @@ SUMMARY:Countdown Notification\r
 STATUS:CONFIRMED\r
 LOCATION:Virtual\r
 DESCRIPTION:{description}\r
-ORGANIZER;CN="MCE Notification":mailto:{sender}\r
+ORGANIZER;CN="LS-GM-CE Notification":mailto:{sender}\r
 ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=FALSE;CN="{login}":mailto:{recipient}\r
 BEGIN:VALARM\r
 DESCRIPTION:REMINDER\r
@@ -122,7 +122,7 @@ SUMMARY:Countdown Notification\r
 STATUS:CONFIRMED\r
 LOCATION:Virtual\r
 DESCRIPTION:{description}\r
-ORGANIZER;CN="MCE Notification":mailto:{sender}\r
+ORGANIZER;CN="LS-GM-CE Notification":mailto:{sender}\r
 ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=FALSE;CN="{login}":mailto:{recipient}\r
 BEGIN:VALARM\r
 DESCRIPTION:REMINDER\r
@@ -162,7 +162,7 @@ END:VCALENDAR
         return {"statusCode": 200, "body": response}
 
     def send_calendar_cancellation(self, event, sequence):
-        login = event["login@startDate"][:-11]
+        login = event["login@startDate"][:-14]
         ticketid = event["ticketId"]
         start_time = self.format_datetime(event["eventDateFrom"], event["startTime"])
         end_time = self.format_datetime(event["eventDateFrom"], event["endTime"])
@@ -170,20 +170,20 @@ END:VCALENDAR
 
         ticketlink = "https://sim.amazon.com/issues/" + ticketid
 
-        sender = "MCE-notification@jwtsao.people.aws.dev"
+        sender = "LS-GM-CE-notification@jwtsao.people.aws.dev"
         recipient = login + "@amazon.com"
-        subject = f"Canceled: MCE Event {ticketid} Notification"
+        subject = f"Canceled: LS-GM-CE Event {ticketid} Notification"
 
         unique_id = self.generate_uid(event)
 
-        description = "Thank you for contributing to the MCE event and our customer."
+        description = "Thank you for contributing to the LS-GM-CE event and our customer."
 
         html_content = (
             f"<html>"
             f"<head></head>"
             f"<body>"
             f"<p>Hi {login},</p>"
-            f"<p>Your nominated support resource of MCE event: <strong>{ticketid}</strong> has been cancelled.</p>"
+            f"<p>Your nominated support resource of LS-GM-CE event: <strong>{ticketid}</strong> has been cancelled.</p>"
             f"<p>For more information, please visit: {ticketlink}</p>"
             f"<p>There is no further action required."
             f"<br><br>"
@@ -203,14 +203,14 @@ VERSION:2.0\r
 CALSCALE:GREGORIAN\r
 BEGIN:VEVENT\r
 UID:{unique_id}\r
-SUMMARY;LANGUAGE=en-US:Canceled: MCE Event {ticketid} Notification\r
+SUMMARY;LANGUAGE=en-US:Canceled: LS-GM-CE Event {ticketid} Notification\r
 DTSTART:{start_time}\r
 DTEND:{end_time}\r
 DTSTAMP:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}\r
 LOCATION:Virtual\r
 STATUS:CANCELLED\r
 DESCRIPTION:{description}\r
-ORGANIZER;CN="MCE Notification":mailto:{sender}\r
+ORGANIZER;CN="LS-GM-CE Notification":mailto:{sender}\r
 ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=FALSE;CN="{login}":mailto:{recipient}\r
 END:VEVENT\r
 END:VCALENDAR
@@ -224,14 +224,14 @@ CALSCALE:GREGORIAN\r
 BEGIN:VEVENT\r
 RRULE:FREQ=DAILY;UNTIL={date_till};INTERVAL=1\r
 UID:{unique_id}\r
-SUMMARY;LANGUAGE=en-US:Canceled: MCE Event {ticketid} Notification\r
+SUMMARY;LANGUAGE=en-US:Cancelled: LS-GM-CE Event {ticketid} Notification\r
 DTSTART:{start_time}\r
 DTEND:{end_time}\r
 DTSTAMP:{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}\r
 LOCATION:Virtual\r
 STATUS:CANCELLED\r
 DESCRIPTION:{description}\r
-ORGANIZER;CN="MCE Notification":mailto:{sender}\r
+ORGANIZER;CN="LS-GM-CE Notification":mailto:{sender}\r
 ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=FALSE;CN="{login}":mailto:{recipient}\r
 END:VEVENT\r
 END:VCALENDAR
