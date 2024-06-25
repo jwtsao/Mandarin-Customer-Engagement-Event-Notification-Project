@@ -129,7 +129,7 @@ def lambda_handler(event, context):
             for entry in post_parsed_entries:
                 post_login_list.append(entry["login"])  # Try to drop duplicate login here
 
-            login = event["login@startDate"][:-11]
+            login = event["login@startDate"][:-14]
 
             if login not in post_login_list:  # The Engineer not yet fill the form
                 reminder = sn.reminder_url

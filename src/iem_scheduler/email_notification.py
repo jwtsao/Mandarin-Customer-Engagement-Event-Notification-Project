@@ -35,7 +35,7 @@ class EmailNotification:
         # Here we use eventDateFrom to send Email for the first day schedule to ensure the calendar invitation correct.
         ticketlink = "https://sim.amazon.com/issues/" + ticketid
 
-        sender = "LS-GM-CE-notification@jwtsao.people.aws.dev"
+        sender = "LS-GM-CE-notification@mand-iem.support.aws.dev"
         recipient = login + "@amazon.com"
         subject = f"""Reminder: LS-GM-CE Event {ticketid} Notification"""
 
@@ -152,7 +152,7 @@ END:VCALENDAR
         msg.attach(mime_text)
         raw_message = msg.as_string()
 
-        ses = boto3.client("ses", region_name="us-east-1")
+        ses = boto3.client("ses", region_name="ap-southeast-1")
         response = ses.send_raw_email(
             Source=sender,
             Destinations=[recipient],
@@ -170,7 +170,7 @@ END:VCALENDAR
 
         ticketlink = "https://sim.amazon.com/issues/" + ticketid
 
-        sender = "LS-GM-CE-notification@jwtsao.people.aws.dev"
+        sender = "LS-GM-CE-notification@mand-iem.support.aws.dev"
         recipient = login + "@amazon.com"
         subject = f"Canceled: LS-GM-CE Event {ticketid} Notification"
 
@@ -252,7 +252,7 @@ END:VCALENDAR
         msg.attach(mime_text)
         raw_message = msg.as_string()
 
-        ses = boto3.client("ses", region_name="us-east-1")
+        ses = boto3.client("ses", region_name="ap-southeast-1")
         response = ses.send_raw_email(
             Source=sender,
             Destinations=[recipient],
